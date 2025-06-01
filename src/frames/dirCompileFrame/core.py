@@ -31,7 +31,10 @@ class PDFMaker(TasksManager):
     path = r''
     def __init__(self, TITLE,path = r'',*args, **kwargs):
         # Генерация текста
-        self.doc = Document(documentclass="extreport", fontenc="T1,T2C")
+        try:
+            self.doc = Document(documentclass="extreport", fontenc="T1,T2C")
+        except:
+            self.doc = Document(documentclass="article", fontenc="T1,T2C")
         self.doc.packages.append(Package('breqn'))
         self.doc.preamble.append(NoEscape(r"\setcounter{page}{2}"))
 
@@ -45,7 +48,7 @@ class PDFMaker(TasksManager):
             pass
         self.doc.packages.append(Package('gost'))
         self.doc.append(NoEscape(r"\tableofcontents"))
-        self.doc.append(NoEscape(r"\intro"))
+        # self.doc.append(NoEscape(r"\intro"))
         match TITLE:
             case self.TASKS.naiskDvi.value:
                 self.doc.append(NoEscape(r"В отчете представлен пример решения задачи оптимального управления при помощи принципа максимума Понтрягина. "))
@@ -122,7 +125,7 @@ class PDFMaker(TasksManager):
                     # case _:
                     #     self.doc.append(NoEscape(f"$${TEMPLATE[step.name]}$$"))
 
-        self.doc.append(NoEscape(r"\conclusions"))
+        # self.doc.append(NoEscape(r"\conclusions"))
         match TITLE:
             case self.TASKS.naiskDvi.value:
                 self.doc.append(NoEscape(r"В отчете был представлен пример решения задачи оптимального управления при помощи принципа максимума Понтрягина."))
