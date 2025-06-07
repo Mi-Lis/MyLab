@@ -20,6 +20,9 @@ class TasksManager:
         metodDyn = "Метод динамического программирования"
 
     pass
+class Task:
+    def __init__(self):
+        pass
 class MainMenu:
     """
     Attributes
