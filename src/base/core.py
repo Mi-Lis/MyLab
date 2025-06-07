@@ -18,11 +18,8 @@ class TasksManager:
         linSys = "Линейные системы с квадратичным критерием качества"
         enOpt = "Энергетически оптимальное движение точки в сопротивляющейся среде"
         metodDyn = "Метод динамического программирования"
-
     pass
-class Task:
-    def __init__(self):
-        pass
+    
 class MainMenu:
     """
     Attributes

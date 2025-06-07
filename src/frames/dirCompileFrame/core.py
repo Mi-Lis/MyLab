@@ -31,10 +31,7 @@ class PDFMaker(TasksManager):
     path = r''
     def __init__(self, TITLE,path = r'',*args, **kwargs):
         # Генерация текста
-        try:
-            self.doc = Document(documentclass="extreport", fontenc="T1,T2C")
-        except:
-            self.doc = Document(documentclass="article", fontenc="T1,T2C")
+        self.doc = Document(documentclass="extreport", fontenc="T1,T2C")
         self.doc.packages.append(Package('breqn'))
         self.doc.preamble.append(NoEscape(r"\setcounter{page}{2}"))
 
@@ -48,7 +45,7 @@ class PDFMaker(TasksManager):
             pass
         self.doc.packages.append(Package('gost'))
         self.doc.append(NoEscape(r"\tableofcontents"))
-        # self.doc.append(NoEscape(r"\intro"))
+        self.doc.append(NoEscape(r"\intro"))
         match TITLE:
             case self.TASKS.naiskDvi.value:
                 self.doc.append(NoEscape(r"В отчете представлен пример решения задачи оптимального управления при помощи принципа максимума Понтрягина. "))
@@ -66,13 +63,11 @@ class PDFMaker(TasksManager):
         with (self.doc.create(Chapter(TITLE))):
             self.doc.append(Section("Постановка задачи"))
             for step in self.DOC:
-
                 match step:
                     case self.DOC.FUNS:
                         self.doc.append(Subsection(step.value))
                         self.doc.append(NoEscape(f"$${TEMPLATE[step.name]}$$"))
                     case self.DOC.EXPERIMENTS:
-
                         for  EXPERIMENT in TEMPLATE[step.name].keys():
                             self.doc.append(Section(step.value+f"№{EXPERIMENT}"))
                             for experimentStep in EXPERIMENTSSTEP:
@@ -80,7 +75,7 @@ class PDFMaker(TasksManager):
                                     case self.DOC.FUNCT.name:
                                         self.doc.append(Subsection(self.DOC.FUNCT.value))
                                         self.doc.append(NoEscape("Функционал имеет вид:"))
-                                        self.doc.append(NoEscape(f"$$ {TEMPLATE[step.name][EXPERIMENT][experimentStep]} $$"))
+                                        self.doc.append(NoEscape(f"$$ {TEMPLATE[step.name][EXPERIMENT][experimentStep]}  \\rightarrow \\operatorname{{min}}$$"))
                                         pass
                                     case self.DOC.PSI0.name:
                                         self.doc.append(Subsection(self.DOC.PSI0.value))
@@ -113,7 +108,7 @@ class PDFMaker(TasksManager):
                                                 self.doc.append(NoEscape("Гамильтониан в конце движения принимает следующие значения:"))
                                                 self.doc.append(NoEscape(f"$$H(x(t_k), \\psi(t_k), t_k) = {TEMPLATE[step.name][EXPERIMENT][experimentStep][1]}$$"))
                             self.doc.append(NoEscape(
-                                r"Результат работы расчетов представлены в соответствии с рисунком \ref{fig:%s}"%(EXPERIMENT)))
+                                r"Результаты расчетов представлены в соответствии с рисунком \ref{fig:%s}"%(EXPERIMENT)))
                             with self.doc.create(Figure(position='H')) as plot:
                                 try:
                                     plot.add_image(fr"fig/plot{EXPERIMENT}.png", width=NoEscape(r'\linewidth'))
@@ -121,14 +116,12 @@ class PDFMaker(TasksManager):
                                     plot.append(NoEscape(r'\label{fig:%s}'%(EXPERIMENT)))  # Добавление метки
                                 except:
                                     pass
-
-                    # case _:
-                    #     self.doc.append(NoEscape(f"$${TEMPLATE[step.name]}$$"))
-
-        # self.doc.append(NoEscape(r"\conclusions"))
+                                
+        self.doc.append(NoEscape(r"\conclusions"))
         match TITLE:
             case self.TASKS.naiskDvi.value:
-                self.doc.append(NoEscape(r"В отчете был представлен пример решения задачи оптимального управления при помощи принципа максимума Понтрягина."))
+                self.doc.append(NoEscape(
+                    r"В отчете был представлен пример решения задачи оптимального управления при помощи принципа максимума Понтрягина."))
                 pass
             case self.TASKS.linSys.value:
                 self.doc.append(NoEscape(
@@ -144,12 +137,14 @@ class PDFMaker(TasksManager):
                 pass
     def compile(self, **kwargs):
         self.doc.generate_pdf('MyLab/output/report', clean_tex=False)
+
 class CompileFrame(BaseFrame):
     id=4
     name = "Генерация отчета"
-    def __init__(self, master, db:BDManager) -> None:
+    def __init__(self, master, db:BDManager,task) -> None:
         super().__init__(master)
         self.db = db
+        self.task = task
         self.mainframe = ttk.Frame(self.frame)
         self.btn = ttk.Button(self.mainframe, text="Compile pdf", command=self.compile,state=tk.ACTIVE)
         self.finish_label = ttk.Label(self.mainframe, text = 'Не готово')
@@ -161,7 +156,6 @@ class CompileFrame(BaseFrame):
         super().grid(row, col)
         self.btn.grid_columnconfigure(0, weight=1)
         self.btn.grid(row=5, column=0,columnspan=2, sticky='nsew')
-
         self.finish_label.grid(row=4, column=0,columnspan=2, sticky='nsew')
         self.pgb.grid(row=3, column=0,columnspan=2, padx=10, pady=10, sticky='nsew')
         self.mainframe.grid_rowconfigure(0, weight=1)
@@ -170,15 +164,11 @@ class CompileFrame(BaseFrame):
 
 # Скомпилировать pdf файл
     def compile(self):
-        try:
-            title = self.db["TASKINFO"].get("value")[0][0]
-        except:
-            title = ""
         def real_compile():
             self.btn['state'] = tk.DISABLED
             try:
                 self.pgb.start(5)
-                pdf = PDFMaker(title)
+                pdf = PDFMaker(self.task)
                 pdf.compile()
                 self.pgb.stop()
                 self.finish_label['text'] = 'Готово'
@@ -190,7 +180,6 @@ class CompileFrame(BaseFrame):
                 self.pgb.stop()
             self.btn['state'] = tk.ACTIVE
         t = threading.Thread(target=real_compile, daemon=True)
-
         try:
             t.start()
         except:

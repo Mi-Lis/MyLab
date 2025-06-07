@@ -47,7 +47,7 @@ class CheckFrame(LogicFrame, TasksManager):
     #             pass
 
     def close(self):
-        self.db["TASKINFO"].remove(1)
+        # self.db["TASKINFO"].remove(1)
         pass
 
 def main():

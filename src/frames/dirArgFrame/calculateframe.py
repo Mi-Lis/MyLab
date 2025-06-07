@@ -219,7 +219,7 @@ class CalculateFrame(tkinter.Tk):
         self.optFrame.grid()
         self.abcFrame = ttk.Frame(self.btnFrame)
         self.abcBtnFrame = ttk.Frame(self.abcFrame)
-        self.abcBtn = ttk.Button(self.abcBtnFrame,text="abc", command=self.showAbc)
+        # self.abcBtn = ttk.Button(self.abcBtnFrame,text="abc", command=self.showAbc)
         plt.rcParams.update(plt.rcParamsDefault)
         
         self.simpleBtn = ttk.Button(self.optFrame, text="Update", command=self.pretty)
@@ -230,18 +230,18 @@ class CalculateFrame(tkinter.Tk):
         self.parseBtn = ttk.Button(self.mainframe, text="Ok")
         self.parseBtn.grid()
         pass
-    def showAbc(self):
-        if self.alphabetFrame is None:
-            self.alphabetFrame = ttk.Frame(self.abcFrame)
-            self.alphabetFrame.grid()
-            for i, a in enumerate(self.abc):
-                self.createButton(self.alphabetFrame, i, a, "abc", self.add, self.abc, n=(len(self.abc), 5), tex=False)
-            return
-        if self.alphabetFrame is not None:
-            self.alphabetFrame.destroy()
-            self.alphabetFrame = None
-            return
-        pass
+    # def showAbc(self):
+    #     if self.alphabetFrame is None:
+    #         self.alphabetFrame = ttk.Frame(self.abcFrame)
+    #         self.alphabetFrame.grid()
+    #         for i, a in enumerate(self.abc):
+    #             self.createButton(self.alphabetFrame, i, a, "abc", self.add, self.abc, n=(len(self.abc), 5), tex=False)
+    #         return
+    #     if self.alphabetFrame is not None:
+    #         self.alphabetFrame.destroy()
+    #         self.alphabetFrame = None
+    #         return
+    #     pass
     def simplifyExpr(self):
         
         self.symexpr = parse_expr(''.join(self.history), local_dict=self.local)
@@ -292,13 +292,12 @@ class CalculateFrame(tkinter.Tk):
                 pass
             pass
     def __del__(self):
-
         self.history = []
         self.expr = ""
         self.lastsym = None
         pass
-    def createSimpleCalc(self):
-        pass
-    def createCustomCalc(self):
-        pass
+    # def createSimpleCalc(self):
+    #     pass
+    # def createCustomCalc(self):
+    #     pass
     pass

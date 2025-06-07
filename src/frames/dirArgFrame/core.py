@@ -16,10 +16,15 @@ class ArgFrame(LogicFrame, TasksManager):
     nextState = States.SolveState
     pathfig = Path("MyLab/tempfig/")
     def updateFun(self, expr, i, name):
-        savefig(i, expr, tex=True, name=name, figsize=(5, 0.25), path=self.pathfig)
-    def __init__(self, root,db:BDManager, nextFrame) -> None:
+        savefig(i, expr, tex=True, name=name, figsize=(3, 0.25), path=self.pathfig)
+        self.fm.updateFun(self.pathfig/(name+f'{i}.png'), i)
+    # def changeFun(self, fs):
+
+    def __init__(self, root,db:BDManager,task,taskId, nextFrame) -> None:
         super().__init__(root, nextFrame,  use_button=False)
         self.db = db
+        self.task=task
+        self.taskId = taskId
         self.mainframe = ttk.Frame(self.frame)
         self.warning = ttk.Label(self.mainframe)
         self.countFunFrame = ttk.Frame(self.mainframe)
@@ -49,7 +54,7 @@ class ArgFrame(LogicFrame, TasksManager):
         self.n = int(self.countFunEntry.text())
         self.db["TASKINFO"].update("n", self.n)
         self.sc = ttk.Scrollbar(self.mainframe, orient="vertical")
-        self.fm = FunctionManager(self.mainframe, self.db, self.n, self.sc,**kwargs)
+        self.fm = FunctionManager(self.mainframe, self.db, self.n, self.sc,task=self.task,**kwargs)
         self.sc["command"]=self.fm.canvas.yview
         self.sc.grid(row=0, column=1, rowspan=self.n+1, sticky='nsew')
         self.sc.grid_columnconfigure(0, weight=1)
@@ -83,17 +88,21 @@ class ArgFrame(LogicFrame, TasksManager):
 
     def apply(self):
         # super().apply()
-        self.task = self.db["TASKINFO"].get("value")[0][0]
+        # self.task = self.db["TASKINFO"].get("value")[0][0]
+        bd = ""
         if self.fm.typeBk.get():
             bkLen = len(self.fm.x0sFrames)
             for i in range(self.n):
-                self.db["BORDERDB"].add(str(i), f"'{self.fm.x0sFrames[i].enity.get()}'")
+                bd+=f"{self.fm.x0sFrames[i].enity.get()}t"
             for i in range(2*self.n, bkLen):
-                self.db["BORDERDB"].add(str(i), f"'{self.fm.x0sFrames[i].enity.get()}'")
+                bd+=f"{self.fm.x0sFrames[i].enity.get()}t"
+
         else:
             for i, arg in enumerate(self.fm.x0sFrames):
-                self.db["BORDERDB"].add(str(i), f"'{arg.enity.get()}'")
-
+                bd+=f"{arg.enity.get()}t"
+        bd=bd[:-1]
+        self.db["BORDERDB"].update_by_id(bd, id=self.taskId)
+        print(bd)
         print(self.db["BORDERDB"].get())
         self._nextFrame.show()
 
@@ -102,8 +111,9 @@ class ArgFrame(LogicFrame, TasksManager):
         self.db["BORDERDB"].delete()
 
     def close(self):
-        self.db["BORDERDB"].delete()
+        # self.db["BORDERDB"].delete()
         self.fm.close()
+        pass
 
 
     def _configure_window(self, event, frame=None, canvas=None):

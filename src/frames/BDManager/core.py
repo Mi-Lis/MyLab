@@ -1,3 +1,4 @@
+from ast import arg
 import pathlib
 import sqlite3
 
@@ -32,25 +33,35 @@ class BD:
         """
         self.ARGS = []
         self.connection = connection
+        self.connection.execute("PRAGMA foreign_keys = ON")
+        self.connection.commit()
         self.cursor = self.connection.cursor()
         self.values = []
         argInfo = None
         for key, value in bdInfo.items():
             self.NAME = key
             argInfo = value
+        if "FOREIGN KEY" in argInfo:
+            self.rowNumber = len(argInfo.keys())-1
+        else:
+            self.rowNumber = len(argInfo.keys())
         
-        self.rowNumber = len(argInfo.keys())
         prompt = "CREATE TABLE IF NOT EXISTS {0} ({1});"
         temp = ""
         i = 0
         for key, value in argInfo.items():
             if i<self.rowNumber-1:
                 temp+=key+' '+value+','
-            else:
+                self.values.append(key.capitalize())
+            if i==self.rowNumber-1:
                 temp+=key+' '+value
-            self.values.append(key.capitalize())
+                self.values.append(key.capitalize())
             i+=1
+        if "FOREIGN KEY" in argInfo:
+            for key, value in argInfo["FOREIGN KEY"].items():
+                temp+=","+f"FOREIGN KEY({key}) REFERENCES {value}(id) ON DELETE CASCADE"
         prompt = prompt.format(self.NAME, temp)
+        print(prompt)
         self.cursor.execute(prompt)
         pass
 
@@ -86,10 +97,12 @@ class BD:
         args = ", ".join(self.values)
         values = ", ".join([str(item) for item in items+tuple(noneValues)])
         prompt = prompt.format(self.NAME, args,values)
-        try: self.cursor.execute(prompt)
-        except sqlite3.IntegrityError: 
-            self.delete()
-            self.cursor.execute(prompt)
+        print(prompt)
+        self.cursor.execute(prompt)
+        # try: self.cursor.execute(prompt)
+        # except sqlite3.IntegrityError: 
+        #     self.delete()
+        #     self.cursor.execute(prompt)
     @check_execute('cursor')
     def update(self, *args):
         prompt = f"UPDATE {self.NAME} SET {",".join([f"{val}='{str(arg)}'" for val, arg in zip(args[::2], args[1::2])])};"
@@ -121,11 +134,9 @@ class BD:
         """
         Удаляет строку с указанным id.
         """
-        if id>self.rowNumber:
-            return None
         prompt = f"DELETE FROM {self.NAME} WHERE id={id};"
         self.cursor.execute(prompt)
-    @check_execute('cursor')
+    # @check_execute('cursor')
     def execute(self, prompt):
         """
         Выполняет пользовательский sql-запрос.
@@ -165,6 +176,10 @@ class BDManager:
         self.connection = sqlite3.Connection(p)
         self.data = {name:BD({name:bd}, connection = self.connection) for name, bd in bdDict.items()}
         pass
+    def execute(self, prompt):
+        cursor = self.connection.cursor()
+        return cursor.execute(prompt).fetchall()
+        pass
     def update(self):
         p = pathlib.Path(self.PATH)/self.NAME
         self.connection = sqlite3.Connection(p)
@@ -176,47 +191,64 @@ class BDManager:
         Получение таблицы по названию.
         """
         return self.data[item]
-    def __del__(self):
-        """
-        Удаление базы данных.
-        """
-        for bd in self.data.values():
-            bd.delete()
-        self.connection.close()
+    # def __del__(self):
+    #     """
+    #     Удаление базы данных.
+    #     """
+    #     for bd in self.data.values():
+    #         bd.delete()
+    #     self.connection.close()
     
     pass
 if __name__ == '__main__':
     bd = {
-            "FUNDB":
+            "USERS":
             {
-                "id":"INTEGER PRIMARY KEY",
-                "TexView": "Text Not Null",
-                "SymView": "Text"
-            }
-            ,
+            "id":"INT PRIMARY KEY",
+            "F":"TEXT NOT NULL",
+            "I":"TEXT NOT NULL",
+            "O":"TEXT NOT NULL"
+            },
+            "TASKNAME":{
+                "name":"TEXT NOT NULL"
+            },
+            "TASKS":
+            {
+                "id":"INT PRIMARY KEY",
+                "userID":"INT",
+                "taskID":"INT",
+                "FOREIGN KEY":
+                {"userId":"USERS",
+                 "taskId":"TASKINFO"}
+            
+            },
             "TASKINFO":
             {
                 "id":"INT PRIMARY KEY",
-                "value":"TEXT NOT NULL"
-            }
-            ,
-           "BORDERDB":
+                "borderId":"INT",
+                "solveId":"INT",
+                "value":"TEXT",
+                "n":"INT",
+                "findBalancePoint":"BOOLEAN",
+                "isbkfun":"BOOL",
+                "FOREIGN KEY":
+                {"borderId":"BORDERDB",
+                 "solveId":"SOLVEINFO"}
+            },
+            "SOLVEINFO":
+            {
+                "id":"INT PRIMARY KEY",
+                "varepsilon":"TEXT",
+                "num":"TEXT",
+                "diffmethod":"TEXT",
+                "method":"TEXT",
+            },
+            "BORDERDB":
             {
                "id":"INTEGER PRIMARY KEY",
                "value":"TEXT NOT NULL"
             }
-            ,
-            "FUNCTIONALDB":
-            {
-                "id":"INTEGER PRIMARY KEY",
-                "value":"TEXT NOT NULL"
-            }
-        }  
+    }
     
     bd = BDManager(bd)
-    bd["FUNDB"].add(1,2)
-    bd["FUNDB"].add(2,3)
-    print(bd["FUNDB"].get())
-    bd["FUNDB"].remove(2)
-    print(bd["FUNDB"])
     pass

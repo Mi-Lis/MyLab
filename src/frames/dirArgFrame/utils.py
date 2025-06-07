@@ -82,13 +82,17 @@ class MPLEntryFrames(MPLEnityFrames):
             self.enity.grid_configure(sticky=kw['sticky'])
         self.enity.grid()
 class MPLButtonFrames(MPLEnityFrames):
+    img = []
     def __init__(self, master,id, Image, side="left", figsize=(0.3, 0.3),buttonImg=None,command=None, sep=None, **grid_opts) -> None:
+        self.img.append(str(buttonImg))
         super().__init__(master, Image, side, figsize, sep, **grid_opts)
         self.create(id, buttonImg, command)
     def create(self, id, buttonImg, command):
         c = partial(command, id, self.enityFrame)
-        self.entry = ttk.Button(self.enityFrame, image=str(buttonImg), command=c)
+        self.entry = ttk.Button(self.enityFrame, image=self.img[-1], command=c)
         self.entry.grid()
+    def defaultImg(self):
+        self.entry["image"] = self.img
     pass
 class MPLMPLFrames(MPLEnityFrames):
     def __init__(self, master, Image, side="left", figsize=(0.75, 0.75),figsize2=(1.65,1), sep="", Image2=None, **kwarg):

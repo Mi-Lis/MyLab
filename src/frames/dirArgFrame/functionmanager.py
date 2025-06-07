@@ -1,6 +1,7 @@
 from functools import partial
 from pathlib import Path
 import dill
+import pickle
 import tkinter as tk
 from tkinter import PhotoImage, ttk
 
@@ -59,8 +60,8 @@ class FunctionManager(TasksManager):
             dill.load(f)
         tp = self.pathfig.joinpath(f"{name}{n-1}.png")
         image = PhotoImage(file=tp)
-        
         self.img.append(image)
+        # self.img.append(image)
         b = frame.children["!button"]
         btn.destroy()
         f = frame
@@ -93,8 +94,9 @@ class FunctionManager(TasksManager):
     def _resize_frame(self, event):
             # Изменяем размеры фрейма в соответствии с Canvas
             self.canvas.itemconfig(self.frame_id, width=event.width)
-    def __init__(self, master,db:BDManager, countFun,  sc, exprs=None, postfix="(t, x, u)") -> None:
+    def __init__(self, master,db:BDManager, countFun,  sc, exprs=None, postfix="(t, x, u)",task="") -> None:
         self.db = db
+        self.task=task
         self.root = ttk.Frame(master)
         self.container = ttk.Frame(self.root)
         self.canvas = tk.Canvas(self.container, width=600, height=600)
@@ -133,6 +135,7 @@ class FunctionManager(TasksManager):
         self.root.grid_columnconfigure(0, weight=1)
         self.root.grid(sticky='nsew')
         self.n = countFun
+        self.fnbf = []
         var = t
         self.fn =  [Function(f"x_{i}")(var) for i in range(1, self.n+1)]
         self.ufn = [Function(f"u")(var)]
@@ -155,8 +158,8 @@ class FunctionManager(TasksManager):
 
         # for i in range(self.n):
         #     self.db["FUNDB"].add(i+1, "0", "0")
-
-        self.task =  self.db["TASKINFO"].get("value")[0][0]
+        print(self.db["TASKINFO"].get("taskNameId"))
+        # self.task =  self.db.execute(f"SELECT value FROM TASKNAME WHERE id = {self.db["TASKINFO"].get("taskNameId")[0][0]}" )
         self.fsFrame = ttk.Frame(self.scrollable_frame)
 
 
@@ -234,7 +237,11 @@ class FunctionManager(TasksManager):
         self.x0sFrames.append(MPLEntryFrames(self.t0Frame, Symbol("t_0"), sep="=", sticky='e'))
 
         self.gridFun()
-
+    def updateFun(self, newFs, i):
+        image = PhotoImage(file=newFs)
+        self.img[i] = image
+        self.fnbf[i].entry["image"] = image
+        self.fnbf[i].entry["state"] = tk.DISABLED
     def gridFun(self):
         self.fsFrame.grid(sticky='nsew')
         self.intFrame.grid_columnconfigure(0, weight=1)
@@ -271,6 +278,7 @@ class FunctionManager(TasksManager):
 
     def changeBk(self):
         self.db["TASKINFO"].update('Isbkfun', self.typeBk.get())
+        print(self.db["TASKINFO"].get("Isbkfun")[0][0])
         if not self.typeBk.get():
             if self.borderPKFrame.winfo_ismapped():
                 self.borderPKFrame.grid_forget()
@@ -294,7 +302,7 @@ class FunctionManager(TasksManager):
             tp = self.pathfig.joinpath(f"{name}{i}.png")
             image = PhotoImage(file=tp)
             self.img.append(image)
-            self.fnbf = MPLButtonFrames(frames[i], self.N, arg[1],buttonImg=self.img[-1], sep=sep, figsize=figsize2, side=side, command=self.createCalculateFrame, sticky='e')
+            self.fnbf.append(MPLButtonFrames(frames[i], self.N, arg[1],buttonImg=self.img[-1], sep=sep, figsize=figsize2, side=side, command=self.createCalculateFrame, sticky='e'))
             self.N+=1
     def applyFun(self):
         pass
